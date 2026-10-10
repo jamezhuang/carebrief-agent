@@ -1,0 +1,79 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+!*.env.example
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# Python environments and build outputs
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.coverage
+.coverage.*
+htmlcov/
+
+# JavaScript dependencies and generated files
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime cache, logs, personal documents and local databases
+.cache/
+.cache-*/
+cache/
+logs/
+*.log
+uploads/
+user_uploads/
+private_uploads/
+private_data/
+user_data/
+health_records/
+backups/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.dump
+*.backup
+
+# Local evaluation runs and browser profiles
+evaluation/results/
+evaluations/results/
+playwright/.auth/
+browser_profiles/
+test-results/
+playwright-report/
+
+# Archives and container image exports
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
