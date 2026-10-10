@@ -4,7 +4,7 @@
 
 ## 版本状态
 
-正在整理首个版本 `v0.1.0`。本仓库已初始化发布说明、上传排除规则和用于本机验证的前后端 Docker 配置。应用源码与镜像尚未发布；后端配置已按提供的依赖清单整理，等待实际构建和启动验证。功能描述对应开发中的本地项目，不代表仓库已经具备完整运行条件。
+正在整理首个版本 `v0.1.0`。本仓库已初始化发布说明、上传排除规则和用于本机验证的前后端 Docker 配置。完整应用源码与正式镜像尚未发布。用户已在本机完成前后端镜像构建；后端核心依赖导入和容器网络数据库连接检查已通过，完整应用启动和工作台功能联调仍待验证。功能描述对应开发中的本地项目，不代表仓库已经具备完整运行条件。
 
 ## 项目能力
 
@@ -65,7 +65,7 @@ docker build --progress=plain --build-arg NEXT_PUBLIC_API_BASE_URL=http://127.0.
 docker run --rm --name carebrief-web-check -p 127.0.0.1:3100:3000 carebrief-web:0.1.0-check
 ```
 
-使用 `http://127.0.0.1:3100/workspace` 验证工作台，使用 `http://127.0.0.1:3100/workspace?tab=runs` 验证运行与反馈页面。此阶段后端仍由本机在 18000 端口运行，尚不构成前后端与数据库的完整容器部署。
+使用 `http://127.0.0.1:3100/workspace` 验证工作台，使用 `http://127.0.0.1:3100/workspace?tab=runs` 验证运行与反馈页面。后端使用 18000 端口；可按下面的启动助手切换为容器运行，切换前停止原本机后端。
 
 ## 核心后端镜像的本机验证
 
@@ -85,3 +85,19 @@ docker run --rm --entrypoint python carebrief-api:0.1.0-check -c "import fastapi
 完整启动前须核对容器内的数据库地址、缓存与文档路径、运行时密钥注入、CORS 和数据持久化挂载。当前仅使用一个 Uvicorn 工作进程。既有 Windows 虚拟环境路径不能直接用于 Linux 容器。
 
 当前 GitHub 仓库仍未包含全部应用源码、依赖清单与公共种子，不能直接从仓库构建。正式镜像、版本标签与 GHCR 发布待完整验收后进行。
+
+## 后端运行配置与启动助手
+
+`apps/api/scripts/prepare_docker_runtime.py` 从本机 `apps/api/.env` 生成私有的 Docker 配置，不修改原文件。它将 RAG 数据库地址转换为数据库容器名称与内部 5432 端口，将支持的存储路径转换为 `/app/.cache` 或 `/app/data`，加入工作台 3100 的 CORS 配置。遇到挂载范围外的存储路径会停止并报告字段名称。
+
+生成的 `.cache/docker-runtime/api.env` 与 `api.dotenv` 含运行凭据，仅用于本机运行，不能上传仓库或发给他人。
+
+先停止原本机 Uvicorn 服务，保持现有数据库和前端容器运行。将启动助手下载到完整本地项目对应位置后，在项目根目录执行：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\apps\api\scripts\start_docker_api.ps1
+```
+
+启动助手使用现有 `carebrief-api:0.1.0-check` 镜像，自动获取 `ai-consultation-v1-rag-db-1` 的自定义网络，将现有 `.cache`、`data` 目录挂载到容器，发布 `127.0.0.1:18000`，并检查 `/openapi.json`。如同名容器或端口已经存在，会停止而不会自动删除。
+
+配置转换的 8 项自动测试已通过；PowerShell 启动助手仍需在用户 Windows 环境执行验证。HTTP 就绪后还需要手动验证现有账号登录、档案、上传文件、知识检索、模型回答及重启后的数据恢复。浏览器兜底和 OCR 尚未在这个核心镜像中启用。
