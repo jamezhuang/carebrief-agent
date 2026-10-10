@@ -4,7 +4,7 @@
 
 ## 版本状态
 
-正在整理首个版本 `v0.1.0`。本仓库已初始化发布说明、上传排除规则和用于本机验证的前端 Docker 配置。应用源码与镜像尚未发布，后端构建配置待核对完整依赖。功能描述对应开发中的本地项目，不代表仓库已经具备完整运行条件。
+正在整理首个版本 `v0.1.0`。本仓库已初始化发布说明、上传排除规则和用于本机验证的前后端 Docker 配置。应用源码与镜像尚未发布；后端配置已按提供的依赖清单整理，等待实际构建和启动验证。功能描述对应开发中的本地项目，不代表仓库已经具备完整运行条件。
 
 ## 项目能力
 
@@ -55,7 +55,7 @@ GitHub 保留运行所需源码、依赖声明、配置示例、数据库初始�
 docker build --progress=plain --build-arg NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:18000 -t carebrief-web:0.1.0-check ./apps/web
 ```
 
-当前仓库尚未上传前端源码和锁文件，不能直接从本仓库构建完整应用。上述命令面向已有本地项目；配置尚未完成实际 Docker 构建验证。
+当前仓库尚未上传前端源码和锁文件，不能直接从本仓库构建完整应用。上述命令面向已有本地项目。用户已在 Docker Desktop Linux 模式下完成前端镜像构建；工作台页面与后端的功能联调仍需确认。
 
 该配置适用于当前未提供自定义 `next.config.*` 的情况；添加运行时配置后需同步调整镜像。浏览器使用的 `NEXT_PUBLIC_API_BASE_URL` 在构建时写入，修改地址后需要重新构建。静态资源通过 `public` 目录复制到运行镜像。
 
@@ -65,4 +65,23 @@ docker build --progress=plain --build-arg NEXT_PUBLIC_API_BASE_URL=http://127.0.
 docker run --rm --name carebrief-web-check -p 127.0.0.1:3100:3000 carebrief-web:0.1.0-check
 ```
 
-使用 `http://127.0.0.1:3100` 验证页面。此阶段后端仍由本机在 18000 端口运行，尚不构成前后端与数据库的完整容器部署。
+使用 `http://127.0.0.1:3100/workspace` 验证工作台，使用 `http://127.0.0.1:3100/workspace?tab=runs` 验证运行与反馈页面。此阶段后端仍由本机在 18000 端口运行，尚不构成前后端与数据库的完整容器部署。
+
+## 核心后端镜像的本机验证
+
+当前 Dockerfile 安装混合检索、文档入库、工作台和网页工具的依赖清单，并通过它们递归安装基础依赖。不安装开发测试、PaddleOCR 或 Crawl4AI 的额外环境；默认 `CRAWL4AI_ENABLED=false`。浏览器兜底与 OCR 需要后续配置并单独验收，当前镜像不代表这些能力已经完成容器化。
+
+构建会复制应用代码、脚本与公共知识种子 `data/knowledge.json`。个人档案、上传资料、SQLite 文件与本地缓存不随镜像复制；其他公共资料需要在整理发布清单后另行处理。
+
+将配置应用到已有完整项目，在项目根目录执行：
+
+```powershell
+docker build --progress=plain -t carebrief-api:0.1.0-check ./apps/api
+docker run --rm --entrypoint python carebrief-api:0.1.0-check -c "import fastapi, langgraph, sqlalchemy, psycopg, pgvector, jieba, docx; print('core dependencies OK')"
+```
+
+依赖导入检查不会启动应用，也不证明数据库、登录、检索或模型 API 已经通过联调。
+
+完整启动前须核对容器内的数据库地址、缓存与文档路径、运行时密钥注入、CORS 和数据持久化挂载。当前仅使用一个 Uvicorn 工作进程。既有 Windows 虚拟环境路径不能直接用于 Linux 容器。
+
+当前 GitHub 仓库仍未包含全部应用源码、依赖清单与公共种子，不能直接从仓库构建。正式镜像、版本标签与 GHCR 发布待完整验收后进行。
