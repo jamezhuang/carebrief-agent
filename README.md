@@ -108,4 +108,18 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\apps\api\scripts\start
 
 脚本排除虚拟环境、缓存、上传资料、备份和运行结果，数据仅复制 `data/knowledge.json`。额外医院目录、原始正文、测评数据和静态资源需要单独核对后补充。自动扫描会对识别出的密钥或数据库密码暴露停止复制，仅报告文件与行号；这不能替代对个人信息和数据再分发权限的人工核对。
 
-准备脚本的 9 项测试已通过。本机发布清单保存在原项目的 `.cache/release-review`，不随源码上传。完成文件审阅、补齐必要资源和干净环境验证后再提交正式版本。
+准备脚本的 11 项测试已通过。路径检查已修正，不再将 http/https URL 误认为 Windows 盘符。本机发布清单保存在原项目的 `.cache/release-review`，不随源码上传。完成文件审阅、补齐必要资源和干净环境验证后再提交正式版本。
+
+## 统一 Compose 配置（待干净环境联调）
+
+根目录 `compose.yaml` 统一使用 pgvector PostgreSQL 17，API 通过 `rag-db:5432` 连接公共知识与工作台数据库。会话数据库暂保持 SQLite，摘要、会话和上传目录使用独立命名卷。默认主机端口为 API 18000、工作台 3100；可通过 `release.env.example` 中的端口变量调整。
+
+该配置需要 Docker Compose 2.24.0 或更新版本，因为 API 环境文件设置为可选。真正启用 live 模式前，仍需配置 API 环境文件、核对其余存储路径、初始化数据库并建立知识索引。示例密码仅用于配置校验，实际部署须使用新生成的字母数字密码（数据库 URL 当前直接插入该值）。
+
+仅校验配置、不启动或修改容器：
+
+```powershell
+docker compose --env-file release.env.example -p carebrief-release -f compose.yaml config --quiet
+```
+
+YAML 解析和服务引用已检查；实际 Docker Compose 校验及干净环境部署尚待用户本机执行。不能据此认为医院目录、私有文档、浏览器兜底或整个发布流程已完成验收。
