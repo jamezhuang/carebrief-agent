@@ -22,7 +22,7 @@ SKIP_DIRS = {
 BACKUP_NAME = re.compile(r'(?:^|[._-])(?:bak|backup|old|copy)(?:[._-]|$)', re.I)
 SECRET_NAME = re.compile(r'(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL)', re.I)
 TOKEN = re.compile(r'\b(?:sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})\b')
-LOCAL_PATH = re.compile(r'[A-Za-z]:[\\/]')
+LOCAL_PATH = re.compile(r'(?<![A-Za-z0-9+._-])[A-Za-z]:[\\/]')
 CREDENTIAL_CONTEXT = re.compile(r'\b(?:password|passwd|pwd|database_url|rag_database_url)\b[\"\x27]?\s*[:=]|\bpostgres(?:ql)?(?:\+[a-z0-9_]+)?://', re.I)
 API_SUFFIXES = {'.py', '.sql', '.html', '.j2', '.jinja2'}
 WEB_SUFFIXES = {'.ts', '.tsx', '.js', '.jsx', '.css', '.scss', '.json', '.svg'}
@@ -132,7 +132,11 @@ def prepare(root: Path, output: Path):
     secrets = sensitive_values(root)
     blockers, review, payloads = [], [], {}
     preserve = {'README.md', '.gitignore', 'apps/api/Dockerfile', 'apps/api/.dockerignore',
-                'apps/web/Dockerfile', 'apps/web/.dockerignore'}
+                'apps/web/Dockerfile', 'apps/web/.dockerignore', 'compose.yaml',
+                'apps/api/scripts/prepare_docker_runtime.py',
+                'apps/api/scripts/start_docker_api.ps1',
+                'apps/api/scripts/prepare_source_release.py',
+                'apps/api/scripts/test_prepare_source_release.py'}
     for relative in selected:
         path = root / relative
         if path.is_symlink() or root not in path.resolve().parents:
