@@ -109,6 +109,20 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(issues[0]['line'], 1)
         self.assertEqual(review[0]['line'], 2)
 
+    def test_web_urls_are_not_reported_as_windows_drive_paths(self):
+        _, review = inspect_file(Path('package-lock.json'), b'https://registry.npmjs.org/pkg\nhttp://example.com\npostgresql://db', set())
+        self.assertEqual(review, [])
+
+    def test_rerun_preserves_reviewed_compose_and_release_helpers(self):
+        for name in ('compose.yaml', 'apps/api/scripts/prepare_source_release.py'):
+            self.write(name, 'outdated local file')
+            target = self.output / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text('reviewed release file')
+        prepare(self.source, self.output)
+        for name in ('compose.yaml', 'apps/api/scripts/prepare_source_release.py'):
+            self.assertEqual((self.output / name).read_text(), 'reviewed release file')
+
 
 if __name__ == '__main__':
     unittest.main()
