@@ -1,0 +1,62 @@
+# Core release deployment. Browser rendering and OCR are separate capabilities.
+services:
+  rag-db:
+    image: pgvector/pgvector:0.8.7-pg17
+    environment:
+      POSTGRES_USER: carebrief
+      POSTGRES_DB: carebrief_rag
+      POSTGRES_PASSWORD: ${RELEASE_POSTGRES_PASSWORD:?Set RELEASE_POSTGRES_PASSWORD}
+    volumes:
+      - rag_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carebrief -d carebrief_rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./apps/api
+    env_file:
+      - path: ./apps/api/.env
+        required: false
+    environment:
+      RAG_DATABASE_URL: postgresql+psycopg://carebrief:${RELEASE_POSTGRES_PASSWORD}@rag-db:5432/carebrief_rag
+      DATABASE_URL: sqlite:////app/.cache/carebrief.db
+      CONTEXT_SUMMARY_DB: /app/.cache/context_summaries.sqlite3
+      WORKSPACE_UPLOAD_DIR: /app/.cache/private_uploads
+      CORS_ORIGINS: http://127.0.0.1:${WEB_PORT:-3100},http://localhost:${WEB_PORT:-3100}
+      CRAWL4AI_ENABLED: "false"
+    volumes:
+      - api_cache:/app/.cache
+    ports:
+      - "127.0.0.1:${API_PORT:-18000}:8000"
+    depends_on:
+      rag-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=4)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    init: true
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:${API_PORT:-18000}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3100}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+
+volumes:
+  rag_data:
+  api_cache:
