@@ -157,3 +157,20 @@ Copy-Item apps/web/.env.local.example apps/web/.env.local
 前端本机开发应将 `NEXT_PUBLIC_API_BASE_URL` 设置为 `http://127.0.0.1:18000`；Compose 构建时通过构建参数提供该地址。改变该公开变量后需重新构建前端。
 
 可以先运行 `docker compose --env-file .env -p carebrief-release -f compose.yaml config --quiet` 校验配置，不输出凭据值。新数据库尚需工作台表初始化和知识入库/索引构建；完整初始化顺序在源码同步并完成独立部署验收后补充，不应把当前配置示例视为完整部署已经通过。
+
+## 界面展示
+
+### 工作台与基础科普
+支持自然语言健康信息问答。
+
+![工作台与基础科普](docs/screenshots/01-workspace.png)
+
+### 文件问答与来源引用
+勾选上传文件后，整理文档内容并展示段落来源。截图使用虚构演示资料。
+
+![文件问答与来源引用](docs/screenshots/02-document-chat.png)
+
+### Agent 运行记录
+展示执行状态、最终校验结果和单轮耗时。运行成功不代表医学内容已经人工审核。
+
+![Agent 运行记录](docs/screenshots/04-agent-runs.png)
