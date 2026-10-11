@@ -4,7 +4,7 @@
 
 ## 版本状态
 
-正在整理首个版本 `v0.1.0`。本仓库已初始化发布说明、上传排除规则和用于本机验证的前后端 Docker 配置。完整应用源码与正式镜像尚未发布。用户已在本机完成前后端镜像构建；后端核心依赖导入和容器网络数据库连接检查已通过，用户随后反馈后端容器启动与工作台功能验证通过。功能描述对应开发中的本地项目，不代表仓库已经具备完整运行条件。
+正在整理首个版本 `v0.1.0`。本仓库已初始化发布说明、上传排除规则和用于本机验证的前后端 Docker 配置。核心应用源码、依赖清单和后端配置示例已上传；正式镜像尚未发布。用户已在本机完成前后端镜像构建；后端核心依赖导入和容器网络数据库连接检查已通过，用户随后反馈后端容器启动与工作台功能验证通过。功能描述对应开发中的本地项目，不代表仓库已经具备完整运行条件。
 
 ## 项目能力
 
@@ -55,7 +55,7 @@ GitHub 保留运行所需源码、依赖声明、配置示例、数据库初始�
 docker build --progress=plain --build-arg NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:18000 -t carebrief-web:0.1.0-check ./apps/web
 ```
 
-当前仓库尚未上传前端源码和锁文件，不能直接从本仓库构建完整应用。上述命令面向已有本地项目。用户已在 Docker Desktop Linux 模式下完成前端镜像构建；用户反馈容器版工作台功能验证通过。
+当前仓库已包含前端源码和锁文件。用户反馈从独立发布目录重新构建前后端镜像成功；新数据库环境的运行验证仍待完成。用户已在 Docker Desktop Linux 模式下完成前端镜像构建；用户反馈容器版工作台功能验证通过。
 
 该配置适用于当前未提供自定义 `next.config.*` 的情况；添加运行时配置后需同步调整镜像。浏览器使用的 `NEXT_PUBLIC_API_BASE_URL` 在构建时写入，修改地址后需要重新构建。静态资源通过 `public` 目录复制到运行镜像。
 
@@ -84,7 +84,7 @@ docker run --rm --entrypoint python carebrief-api:0.1.0-check -c "import fastapi
 
 完整启动前须核对容器内的数据库地址、缓存与文档路径、运行时密钥注入、CORS 和数据持久化挂载。当前仅使用一个 Uvicorn 工作进程。既有 Windows 虚拟环境路径不能直接用于 Linux 容器。
 
-当前 GitHub 仓库仍未包含全部应用源码、依赖清单与公共种子，不能直接从仓库构建。正式镜像、版本标签与 GHCR 发布待完整验收后进行。
+当前 GitHub 仓库已包含核心应用源码、依赖清单与初始 knowledge.json 种子。完整医院目录和额外知识正文尚未发布；正式镜像、版本标签与 GHCR 发布待独立部署验收后进行。
 
 ## 后端运行配置与启动助手
 
@@ -122,7 +122,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\apps\api\scripts\start
 docker compose --env-file release.env.example -p carebrief-release -f compose.yaml config --quiet
 ```
 
-YAML 解析和服务引用已检查；实际 Docker Compose 校验及干净环境部署尚待用户本机执行。不能据此认为医院目录、私有文档、浏览器兜底或整个发布流程已完成验收。
+YAML 解析和服务引用已检查；用户反馈 Docker Compose 配置校验返回 0；干净环境部署尚待完成。不能据此认为医院目录、私有文档、浏览器兜底或整个发布流程已完成验收。
 
 ## 配置文件说明
 
@@ -134,7 +134,7 @@ YAML 解析和服务引用已检查；实际 Docker Compose 校验及干净环�
 | `apps/api/workspace.env.example` | 按需合并到后端 `.env` | 工作台高级配置参考 |
 | `apps/api/crawl4ai-integration.env.example` | 按需合并到后端 `.env` | 可选浏览器读取参考，核心镜像暂未启用 |
 
-后端统一示例正在本机补齐。生成器 `apps/api/scripts/generate_env_example.py` 从应用代码识别 `os.getenv` 等配置字段，并参考现有配置的字段名称、公开模型名称和可信提供商地址。密钥、密码、管理员邮箱及 Windows 绝对路径不会复制；未知字段保持注释。输出不是实际凭据文件，也不修改现有 `.env`。生成器的 5 项测试已通过，实际项目输出还需核对。
+后端统一示例 apps/api/.env.example 已由用户在本机生成、核对并上传。生成器 `apps/api/scripts/generate_env_example.py` 从应用代码识别 `os.getenv` 等配置字段，并参考现有配置的字段名称、公开模型名称和可信提供商地址。密钥、密码、管理员邮箱及 Windows 绝对路径不会复制；未知字段保持注释。输出不是实际凭据文件，也不修改现有 `.env`。生成器的 5 项测试已通过，实际项目输出还需核对。
 
 发布目录已有源码时，可在本机执行（将 `<existing-api>` 替换为现有后端目录）：
 
