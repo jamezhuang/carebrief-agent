@@ -123,3 +123,37 @@ docker compose --env-file release.env.example -p carebrief-release -f compose.ya
 ```
 
 YAML 解析和服务引用已检查；实际 Docker Compose 校验及干净环境部署尚待用户本机执行。不能据此认为医院目录、私有文档、浏览器兜底或整个发布流程已完成验收。
+
+## 配置文件说明
+
+| 文件 | 复制目标 | 用途 |
+| --- | --- | --- |
+| `release.env.example` | 根目录 `.env` | 统一 Compose 的新数据库密码和主机端口 |
+| `apps/api/.env.example` | `apps/api/.env` | 模型、Embedding、可选外部检索和后端功能配置 |
+| `apps/web/.env.local.example` | `apps/web/.env.local` | 本机前端开发时的 API 地址 |
+| `apps/api/workspace.env.example` | 按需合并到后端 `.env` | 工作台高级配置参考 |
+| `apps/api/crawl4ai-integration.env.example` | 按需合并到后端 `.env` | 可选浏览器读取参考，核心镜像暂未启用 |
+
+后端统一示例正在本机补齐。生成器 `apps/api/scripts/generate_env_example.py` 从应用代码识别 `os.getenv` 等配置字段，并参考现有配置的字段名称、公开模型名称和可信提供商地址。密钥、密码、管理员邮箱及 Windows 绝对路径不会复制；未知字段保持注释。输出不是实际凭据文件，也不修改现有 `.env`。生成器的 5 项测试已通过，实际项目输出还需核对。
+
+发布目录已有源码时，可在本机执行（将 `<existing-api>` 替换为现有后端目录）：
+
+```powershell
+<existing-api>/.venv/Scripts/python.exe apps/api/scripts/generate_env_example.py --api-root apps/api --reference-env <existing-api>/.env --output apps/api/.env.example
+```
+
+正式使用时，在没有实际配置文件的情况下复制示例：
+
+```powershell
+Copy-Item release.env.example .env
+Copy-Item apps/api/.env.example apps/api/.env
+Copy-Item apps/web/.env.local.example apps/web/.env.local
+```
+
+根目录 `.env` 的 `RELEASE_POSTGRES_PASSWORD` 必须改为新生成的字母数字密码；不能直接用示例占位符部署。后端 live 模式需填写 DeepSeek 与所选 Embedding 服务的真实密钥；只有启用相应外部检索时才需要填其检索密钥。生成的示例沿用实际代码的字段名，勿另造别名。浏览器和 OCR 的依赖环境仍需单独配置。
+
+统一 Compose 会覆盖后端的 RAG 地址、会话数据库地址和关键存储路径；本机直接启动后端时，须将示例 RAG URL 中 `CHANGE_ME` 改为自己数据库的密码。根目录变量用于 Compose 插值，后端 `.env` 用于 API 服务；两者不是同一个配置文件。原有 `compose.rag.yml` 是单独数据库的开发配置，不与统一配置同时启动。
+
+前端本机开发应将 `NEXT_PUBLIC_API_BASE_URL` 设置为 `http://127.0.0.1:18000`；Compose 构建时通过构建参数提供该地址。改变该公开变量后需重新构建前端。
+
+可以先运行 `docker compose --env-file .env -p carebrief-release -f compose.yaml config --quiet` 校验配置，不输出凭据值。新数据库尚需工作台表初始化和知识入库/索引构建；完整初始化顺序在源码同步并完成独立部署验收后补充，不应把当前配置示例视为完整部署已经通过。
