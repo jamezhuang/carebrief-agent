@@ -1,0 +1,56 @@
+name: Publish v0.1.0 images
+on:
+  push:
+    tags:
+      - v0.1.0
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [api, web]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Build image
+        env:
+          COMPONENT: ${{ matrix.component }}
+        run: |
+          IMAGE="ghcr.io/jamezhuang/carebrief-$COMPONENT:0.1.0"
+          if [ "$COMPONENT" = web ]; then
+            docker build --build-arg NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:18000 --label org.opencontainers.image.revision="$GITHUB_SHA" -t "$IMAGE" "apps/$COMPONENT"
+          else
+            docker build --label org.opencontainers.image.revision="$GITHUB_SHA" -t "$IMAGE" "apps/$COMPONENT"
+          fi
+      - name: Check API dependencies
+        if: matrix.component == 'api'
+        run: docker run --rm ghcr.io/jamezhuang/carebrief-api:0.1.0 python -m pip check
+      - name: Push image
+        env:
+          COMPONENT: ${{ matrix.component }}
+        run: docker push "ghcr.io/jamezhuang/carebrief-$COMPONENT:0.1.0"
+  release:
+    needs: images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create GitHub release after both images are published
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create v0.1.0 --verify-tag --title "CareBrief Agent v0.1.0" --notes-file RELEASE_NOTES_v0.1.0.md
